@@ -17,6 +17,11 @@ mysql> INSERT INTO Departments
     -> (NULL, 'Services');
 Query OK, 3 rows affected (0.36 sec)
 Records: 3  Duplicates: 0  Warnings: 0
+
+mysql> create index index_commission on Commissions (commission_amount);
+Query OK, 0 rows affected (0.38 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
 ////////////////////////////////////////////////////////////////////////////
 mysql> CREATE TABLE Employees
     -> (
