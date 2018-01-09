@@ -18,7 +18,7 @@ mysql> INSERT INTO Departments
 Query OK, 3 rows affected (0.36 sec)
 Records: 3  Duplicates: 0  Warnings: 0
 
-mysql> CREATE INDEX index_commission ON Commissions (commission_amount);
+mysql> create index index_commission on Commissions (commission_amount);
 Query OK, 0 rows affected (0.38 sec)
 Records: 0  Duplicates: 0  Warnings: 0
 
@@ -97,38 +97,45 @@ mysql> SELECT *
 
 
 3)
-mysql> SELECT department.name, employee.name, MAX(total_commission)
-    -> FROM (
-    -> SELECT employee_id, SUM(commission_amount) AS total_commission
-    -> FROM Commissions
-    -> GROUP BY employee_id
+mysql> SELECT department.name, SUM(temp.total_commission) AS department_commission
+    -> FROM
+    -> (
+    ->   SELECT employee_id, SUM(commission_amount) AS total_commission
+    ->   FROM Commissions
+    ->   GROUP BY employee_id
     -> )
-    -> AS temp JOIN Employees AS employee
-    -> ON employee.id=temp.employee_id
+    -> AS temp JOIN Employees AS e
+    -> ON e.id=temp.employee_id
     -> JOIN Departments AS department
-    -> ON employee.department_id=department.id;
-+---------+-------------+-----------------------+
-| name    | name        | max(total_commission) |
-+---------+-------------+-----------------------+
-| Banking | Chris Gayle |                  9000 |
-+---------+-------------+-----------------------+
+    -> ON e.department_id=department.id
+    -> GROUP BY e.department_id
+    -> ORDER BY department_commission DESC
+    -> LIMIT 1;
++---------+-----------------------+
+| name    | department_commission |
++---------+-----------------------+
+| Banking |                 13000 |
++---------+-----------------------+
 1 row in set (0.00 sec)
 
 
+
 4)
-mysql> SELECT name
-    -> FROM Employees
-    -> WHERE id IN
-    -> (
-    -> SELECT DISTINCT employee_id
+mysql> SELECT GROUP_CONCAT(e.name) AS Players, total
+    -> FROM (
+    -> SELECT employee_id, SUM(commission_amount) AS total
     -> FROM Commissions
-    -> WHERE commission_amount > 3000
-    -> );
-+--------------+
-| name         |
-+--------------+
-| Chris Gayle  |
-| Rahul Dravid |
-| Wasim Akram  |
-+--------------+
-3 rows in set (0.00 sec)
+    -> GROUP BY employee_id
+    -> HAVING total > 3000
+    -> ) AS temp JOIN Employees AS e
+    -> ON temp.employee_id=e.id
+    -> GROUP BY temp.total;
++----------------+-------+
+| Players        | total |
++----------------+-------+
+| Rahul Dravid   |  4000 |
+| Wasim Akram    |  5000 |
+| Michael Clarke |  6000 |
+| Chris Gayle    |  9000 |
++----------------+-------+
+4 rows in set (0.00 sec)
